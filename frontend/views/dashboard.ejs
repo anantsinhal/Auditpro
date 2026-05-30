@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .audit-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -8px rgba(0,0,0,0.1); }
+    .tool-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1); border-color: var(--hover-border); }
+    .tool-card { --hover-border: #c7d2fe; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <%- include('partials/header') %>
+  <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full">
+
+    <!-- Welcome Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Welcome back<%= user.name ? ', ' + user.name.split(' ')[0] : '' %></h1>
+        <p class="text-sm text-slate-500 mt-0.5">Manage your audits and track your SEO progress</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm">
+          <span class="text-sm text-slate-600">Plan:</span>
+          <span class="text-sm font-semibold <%= user.plan === 'pro' ? 'text-amber-700' : 'text-slate-700' %>"><%= user.plan === 'pro' ? '⭐ Pro' : 'Free' %></span>
+        </div>
+        <% if (user.plan === 'free') { %>
+          <div class="flex items-center gap-2 px-3 py-1.5 bg-white rounded-lg border border-slate-200 shadow-sm">
+            <div class="flex gap-0.5">
+              <% for (let i = 0; i < freeLimit; i++) { %>
+                <div class="w-2 h-2 rounded-full <%= i < auditsThisMonth ? 'bg-indigo-500' : 'bg-slate-200' %>"></div>
+              <% } %>
+            </div>
+            <span class="text-xs text-slate-500"><%= auditsThisMonth %>/<%= freeLimit %> audits</span>
+          </div>
+          <a href="/pricing" class="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md">Upgrade</a>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Alerts -->
+    <% if (error) { %>
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p class="text-red-800 text-sm"><%= error %></p>
+      </div>
+    <% } %>
+    <% if (upgraded) { %>
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p class="text-green-800 text-sm">You're now on the <strong>Pro plan</strong>. Enjoy unlimited audits!</p>
+      </div>
+    <% } %>
+    <% if (typeof canAudit !== 'undefined' && !canAudit) { %>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <p class="text-amber-800 text-sm">You've used your free audits this month. <a href="/pricing" class="font-semibold underline hover:text-amber-900">Upgrade to Pro</a> for unlimited audits.</p>
+      </div>
+    <% } %>
+
+    <!-- Audit Tools Grid -->
+    <div class="mb-8">
+      <h2 class="text-lg font-semibold text-slate-900 mb-4">Run new audit</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Website SEO Audit -->
+        <div class="tool-card bg-white rounded-2xl border border-slate-200 p-6 transition-all duration-300 cursor-default" style="--hover-border: #c7d2fe">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+          <h3 class="font-semibold text-slate-900 mb-1">Website SEO Audit</h3>
+          <p class="text-xs text-slate-500 mb-4 leading-relaxed">Technical SEO, on-page issues, content depth, and performance analysis.</p>
+          <form action="/audit" method="post" class="flex gap-2">
+            <input type="url" name="url" required placeholder="https://example.com" class="flex-1 min-w-0 px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-slate-50 focus:bg-white transition-colors">
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 text-sm transition-colors shrink-0" <%= !canAudit ? 'disabled' : '' %>>Audit</button>
+          </form>
+        </div>
+
+        <!-- Restaurant Growth Audit -->
+        <div class="tool-card bg-white rounded-2xl border border-slate-200 p-6 transition-all duration-300 cursor-default" style="--hover-border: #fcd34d">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          </div>
+          <h3 class="font-semibold text-slate-900 mb-1">Restaurant Growth Audit</h3>
+          <p class="text-xs text-slate-500 mb-4 leading-relaxed">Local SEO, competitor gap, menu suggestions, and a 30-day action plan.</p>
+          <a href="/local-audit" class="inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors <%= !canAudit ? 'pointer-events-none opacity-50' : '' %>">
+            Start Audit <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </a>
+        </div>
+
+        <!-- Competitor Comparison -->
+        <div class="tool-card bg-white rounded-2xl border border-slate-200 p-6 transition-all duration-300 cursor-default" style="--hover-border: #c4b5fd">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
+          </div>
+          <h3 class="font-semibold text-slate-900 mb-1">Competitor Comparison</h3>
+          <p class="text-xs text-slate-500 mb-4 leading-relaxed">Side-by-side SEO audits, score comparison, and content gap analysis.</p>
+          <a href="/compare" class="inline-flex items-center gap-1 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors <%= !canAudit ? 'pointer-events-none opacity-50' : '' %>">
+            Compare <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-5 mb-8 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h2 class="text-sm font-semibold text-slate-900">Export Audit History</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Download a backup of all your audit data</p>
+      </div>
+      <div class="flex gap-2">
+        <a href="/backup?format=json" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          JSON
+        </a>
+        <a href="/backup?format=csv" class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+          CSV
+        </a>
+      </div>
+    </div>
+
+    <!-- Score Trend Chart -->
+    <% if (typeof scoreHistory !== 'undefined') { %>
+      <% const history = (() => { try { return JSON.parse(scoreHistory) || []; } catch { return []; } })(); %>
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 mb-8">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <h2 class="text-sm font-semibold text-slate-900">Score Trend</h2>
+          <span class="text-xs text-slate-500"><%= history.length %> point<%= history.length === 1 ? '' : 's' %></span>
+        </div>
+        <% if (history.length === 0) { %>
+          <p class="text-sm text-slate-500">Run an audit to see your SEO score trend over time.</p>
+        <% } else { %>
+          <canvas id="trendChart" height="120"></canvas>
+        <% } %>
+      </div>
+    <% } %>
+
+    <!-- Recent Audits -->
+    <div class="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <h2 class="text-lg font-semibold text-slate-900">Recent audits</h2>
+      <form action="/dashboard" method="get" class="flex flex-wrap items-center gap-2">
+        <input type="text" name="search" value="<%= typeof search !== 'undefined' ? search : '' %>" placeholder="Search by URL…" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors w-48">
+        <select name="score" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+          <option value="">All Scores</option>
+          <option value="good" <%= (typeof scoreFilter !== 'undefined' && scoreFilter === 'good') ? 'selected' : '' %>>Good (70+)</option>
+          <option value="needs-work" <%= (typeof scoreFilter !== 'undefined' && scoreFilter === 'needs-work') ? 'selected' : '' %>>Needs Work (40-69)</option>
+          <option value="poor" <%= (typeof scoreFilter !== 'undefined' && scoreFilter === 'poor') ? 'selected' : '' %>>Poor (&lt;40)</option>
+        </select>
+        <button type="submit" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">Filter</button>
+        <% if ((typeof search !== 'undefined' && search) || (typeof scoreFilter !== 'undefined' && scoreFilter)) { %>
+          <a href="/dashboard" class="px-3 py-1.5 text-sm text-slate-500 hover:text-slate-700 transition-colors">Clear</a>
+        <% } %>
+      </form>
+    </div>
+    <% if (audits && audits.length > 0) { %>
+      <div class="space-y-2">
+        <% audits.forEach(function(a) { %>
+          <a href="/audit/<%= a._id %>" class="audit-card bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-3 transition-all duration-200 block hover:border-slate-300">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
+              <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 <%= a.seoScore >= 70 ? 'bg-green-50 text-green-700' : a.seoScore >= 40 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700' %>">
+                <span class="text-sm font-bold"><%= a.seoScore %></span>
+              </div>
+              <div class="min-w-0">
+                <p class="text-sm font-medium text-indigo-600 truncate"><%= a.url %></p>
+                <p class="text-xs text-slate-400 mt-0.5"><%= new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold <%= a.seoScore >= 70 ? 'bg-green-100 text-green-700' : a.seoScore >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700' %>">
+                <%= a.seoScore >= 70 ? 'Good' : a.seoScore >= 40 ? 'Needs Work' : 'Poor' %>
+              </span>
+              <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
+          <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+        </div>
+        <h3 class="text-base font-semibold text-slate-900 mb-1">No audits yet</h3>
+        <p class="text-sm text-slate-500">Run your first audit using the tools above to get started.</p>
+      </div>
+    <% } %>
+
+    <!-- Pagination -->
+    <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+      <% const qs = []; if (typeof search !== 'undefined' && search) qs.push('search=' + encodeURIComponent(search)); if (typeof scoreFilter !== 'undefined' && scoreFilter) qs.push('score=' + encodeURIComponent(scoreFilter)); const extra = qs.length ? '&' + qs.join('&') : ''; %>
+      <div class="flex items-center justify-center gap-2 mt-6">
+        <% if (page > 1) { %>
+          <a href="/dashboard?page=<%= page - 1 %><%= extra %>" class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-sm text-slate-600 transition-colors">Previous</a>
+        <% } %>
+        <span class="px-3 py-1.5 text-sm text-slate-500">Page <%= page %> of <%= totalPages %></span>
+        <% if (page < totalPages) { %>
+          <a href="/dashboard?page=<%= page + 1 %><%= extra %>" class="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg text-sm text-slate-600 transition-colors">Next</a>
+        <% } %>
+      </div>
+    <% } %>
+  </main>
+  <%- include('partials/footer') %>
+
+  <!-- Chart.js for trend chart -->
+  <% if (typeof scoreHistory !== 'undefined') { %>
+    <% const historyData = (() => { try { return JSON.parse(scoreHistory) || []; } catch { return []; } })(); %>
+    <% if (historyData.length > 0) { %>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+      <script>
+        const data = <%- scoreHistory %>;
+        const sorted = Array.isArray(data)
+          ? data.slice().sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+          : [];
+        const labels = sorted.map(d => new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const scores = sorted.map(d => d.seo_score);
+        new Chart(document.getElementById('trendChart'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'SEO Score',
+              data: scores,
+              borderColor: '#6366f1',
+              backgroundColor: 'rgba(99, 102, 241, 0.08)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 4,
+              pointBackgroundColor: '#6366f1'
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { min: 0, max: 100, grid: { color: '#f1f5f9' } },
+              x: { grid: { display: false } }
+            }
+          }
+        });
+      </script>
+    <% } %>
+  <% } %>
+</body>
+</html>

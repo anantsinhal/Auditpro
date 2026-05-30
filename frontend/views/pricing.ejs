@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <%- include('partials/header') %>
+  <main class="max-w-4xl mx-auto px-4 py-16 flex-1">
+    <div class="text-center mb-12">
+      <span class="inline-flex items-center gap-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full mb-4">Simple Pricing</span>
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-3">Choose the plan that fits you</h1>
+      <p class="text-slate-500 max-w-md mx-auto">Start free with <%= Number.isFinite(freePlan?.monthlyAudits) ? freePlan.monthlyAudits : 'unlimited' %> audits per month. Upgrade anytime for unlimited access and advanced features.</p>
+    </div>
+
+    <% if (typeof upgrade !== 'undefined' && upgrade) { %>
+      <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-8 text-center flex items-center justify-center gap-2">
+        <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+        <p class="text-amber-800 text-sm">You've reached the free plan limit. Upgrade to Pro for unlimited audits.</p>
+      </div>
+    <% } %>
+
+    <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+      <!-- Free Plan -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-8 flex flex-col">
+        <div class="mb-6">
+          <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-4">
+            <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Free</h2>
+          <p class="text-sm text-slate-500 mt-1">Great for trying things out</p>
+        </div>
+        <p class="text-4xl font-bold text-slate-900">₹0<span class="text-base font-normal text-slate-500">/month</span></p>
+        <ul class="mt-6 space-y-3 text-sm text-slate-600 flex-1">
+          <li class="flex items-center gap-2"><svg class="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg><%= Number.isFinite(freePlan?.monthlyAudits) ? freePlan.monthlyAudits : 'Unlimited' %> audits per month</li>
+          <li class="flex items-center gap-2"><svg class="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>SEO score & report</li>
+          <li class="flex items-center gap-2"><svg class="w-4 h-4 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>Basic recommendations</li>
+        </ul>
+        <% if (user) { %>
+          <p class="mt-6 text-sm text-slate-500 text-center py-3">You're on the free plan</p>
+        <% } else { %>
+          <a href="/register" class="mt-6 block w-full text-center bg-slate-100 text-slate-800 py-3 rounded-xl font-medium hover:bg-slate-200 transition-colors">Get started</a>
+        <% } %>
+      </div>
+
+      <!-- Pro Plan -->
+      <div class="bg-white rounded-2xl border-2 border-indigo-500 p-8 relative shadow-xl shadow-indigo-100 flex flex-col">
+        <span class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-semibold px-4 py-1 rounded-full shadow-sm">Most Popular</span>
+        <div class="mb-6">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-sm">
+            <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+          </div>
+          <h2 class="text-lg font-bold text-slate-900">Pro</h2>
+          <p class="text-sm text-slate-500 mt-1">For serious SEO work</p>
+        </div>
+        <p class="text-4xl font-bold text-slate-900">₹999<span class="text-base font-normal text-slate-500">/month</span></p>
+        <ul class="mt-6 space-y-3 text-sm text-slate-600 flex-1">
+          <li class="flex items-center gap-2"><svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg><strong>Unlimited</strong> audits</li>
+          <li class="flex items-center gap-2"><svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>Full audit history</li>
+          <li class="flex items-center gap-2"><svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>All AI recommendations</li>
+          <li class="flex items-center gap-2"><svg class="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>Priority support</li>
+        </ul>
+        <% if (user && user.plan === 'pro') { %>
+          <div class="mt-6 text-center py-3 rounded-xl bg-indigo-50">
+            <p class="text-sm text-indigo-700 font-medium flex items-center justify-center gap-1.5"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>You have Pro</p>
+          </div>
+        <% } else if (user) { %>
+          <button type="button" id="btn-pro" class="mt-6 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-xl font-medium transition-all shadow-sm hover:shadow-md">Upgrade to Pro</button>
+        <% } else { %>
+          <a href="/register?plan=pro" class="mt-6 block w-full text-center bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3 rounded-xl font-medium transition-all shadow-sm hover:shadow-md">Sign up for Pro</a>
+        <% } %>
+      </div>
+    </div>
+
+    <p class="mt-10 text-center text-sm text-slate-400 flex items-center justify-center gap-2">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+      Payments powered by Razorpay. Secure and compliant.
+    </p>
+  </main>
+  <%- include('partials/footer') %>
+
+  <% if (user && user.plan !== 'pro') { %>
+  <script>
+    (function () {
+      var btn = document.getElementById('btn-pro');
+      if (!btn) return;
+
+      function showError(message) {
+        alert(message || 'Something went wrong');
+      }
+
+      btn.addEventListener('click', function (e) {
+        try { e.preventDefault(); e.stopPropagation(); } catch (_) {}
+
+        if (btn.disabled) return;
+        btn.disabled = true;
+
+        fetch('/payment/create-order', {
+          credentials: 'same-origin',
+          headers: { 'Accept': 'application/json' }
+        })
+          .then(function (r) {
+            // If auth middleware redirects (e.g., to /login), fetch follows by default.
+            // Detect and navigate explicitly so the user sees the right page.
+            if (r.redirected) {
+              window.location.href = r.url;
+              return Promise.reject(new Error('redirected'));
+            }
+
+            var ct = (r.headers.get('content-type') || '').toLowerCase();
+            if (ct.indexOf('application/json') === -1) {
+              // Unexpected HTML response (often a login page). Send the user to login.
+              window.location.href = '/login';
+              return Promise.reject(new Error('non-json'));
+            }
+
+            return r.json().catch(function () { return null; }).then(function (data) {
+              return { ok: r.ok, status: r.status, data: data };
+            });
+          })
+          .then(function (result) {
+            if (result.status === 401) {
+              window.location.href = '/login';
+              return;
+            }
+
+            var data = result.data || {};
+            if (!result.ok || !data.success) {
+              // Razorpay auth failures typically bubble up as 401 with message "Authentication failed".
+              // Show a clearer message.
+              var msg = data.message || 'Could not create order.';
+              if ((result.status === 401 || result.status === 403) && /auth/i.test(msg)) {
+                msg = 'Payment gateway is not configured correctly. Please contact support.';
+              }
+              showError(msg);
+              return;
+            }
+
+            var options = {
+              key: data.keyId,
+              amount: data.amount,
+              currency: data.currency,
+              order_id: data.orderId,
+              name: 'AuditPro',
+              description: 'Pro plan - Unlimited audits',
+              handler: function (response) {
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/payment/verify';
+                ['razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature'].forEach(function (k) {
+                  var i = document.createElement('input');
+                  i.type = 'hidden';
+                  i.name = k;
+                  i.value = response[k];
+                  form.appendChild(i);
+                });
+                document.body.appendChild(form);
+                form.submit();
+              }
+            };
+
+            var rzp = new Razorpay(options);
+            rzp.open();
+          })
+          .catch(function (err) {
+            if (err && err.message === 'redirected') return;
+            if (err && err.message === 'non-json') return;
+            showError('Something went wrong while starting payment.');
+          })
+          .finally(function () {
+            // Re-enable unless we navigated away.
+            btn.disabled = false;
+          });
+      });
+    })();
+  </script>
+  <% } %>
+</body>
+</html>

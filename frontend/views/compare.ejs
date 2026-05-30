@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .win { background-color: #ecfdf5; color: #065f46; }
+    .lose { background-color: #fef2f2; color: #991b1b; }
+    .tie { background-color: #f8fafc; color: #475569; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <%- include('partials/header') %>
+
+  <%
+    const y = yours || {};
+    const c = competitor || {};
+    const yMeta = y.pageMetadata || {};
+    const cMeta = c.pageMetadata || {};
+    const yIssues = y.issuesSummary || { total: 0, high: 0, medium: 0, low: 0 };
+    const cIssues = c.issuesSummary || { total: 0, high: 0, medium: 0, low: 0 };
+    const yPS = y.pageSpeedInsights || {};
+    const cPS = c.pageSpeedInsights || {};
+    const yCWV = yPS.coreWebVitals || {};
+    const cCWV = cPS.coreWebVitals || {};
+    const ySR = y.sitemapRobots || { sitemap: {}, robots: {} };
+    const cSR = c.sitemapRobots || { sitemap: {}, robots: {} };
+    const yBL = y.brokenLinks || { broken: [], checked: 0 };
+    const cBL = c.brokenLinks || { broken: [], checked: 0 };
+
+    const scoreColor = (s) => s >= 70 ? 'text-green-700 bg-green-100' : s >= 40 ? 'text-amber-700 bg-amber-100' : 'text-red-700 bg-red-100';
+    const scoreRing = (s) => s >= 70 ? 'ring-green-400' : s >= 40 ? 'ring-amber-400' : 'ring-red-400';
+
+    function compareClass(a, b, higherIsBetter = true) {
+      if (a === b || a == null || b == null) return 'tie';
+      if (higherIsBetter) return a > b ? 'win' : 'lose';
+      return a < b ? 'win' : 'lose';
+    }
+
+    function fmtMs(ms) {
+      if (ms == null) return '—';
+      return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : Math.round(ms) + 'ms';
+    }
+  %>
+
+  <main class="max-w-6xl mx-auto px-4 py-8 flex-1 w-full">
+    <div class="mb-6 flex items-center justify-between">
+      <a href="/compare" class="text-sm text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        New Comparison
+      </a>
+      <a href="/dashboard" class="text-sm text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1">
+        Dashboard
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+      </a>
+    </div>
+
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-slate-900 mb-1">Competitor Comparison Report</h1>
+      <p class="text-slate-500 text-sm">Side-by-side SEO analysis. <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-green-400"></span>Winning</span> &middot; <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-400"></span>Losing</span></p>
+    </div>
+
+    <!-- Score Comparison Header -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- Your Site -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-center">
+        <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wider mb-2">Your Site</p>
+        <div class="w-24 h-24 mx-auto rounded-full ring-4 <%= scoreRing(y.seoScore || 0) %> ring-offset-2 flex flex-col items-center justify-center <%= scoreColor(y.seoScore || 0) %> mb-3">
+          <span class="text-3xl font-bold leading-none"><%= y.seoScore || 0 %></span>
+          <span class="text-xs font-semibold mt-1 opacity-70">/ 100</span>
+        </div>
+        <p class="text-sm font-medium text-slate-900 break-all"><%= y.url || '—' %></p>
+      </div>
+
+      <!-- VS -->
+      <div class="flex items-center justify-center">
+        <div class="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200">
+          <span class="text-xl font-bold text-white">VS</span>
+        </div>
+      </div>
+
+      <!-- Competitor -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 text-center">
+        <p class="text-xs font-semibold text-red-500 uppercase tracking-wider mb-2">Competitor</p>
+        <div class="w-24 h-24 mx-auto rounded-full ring-4 <%= scoreRing(c.seoScore || 0) %> ring-offset-2 flex flex-col items-center justify-center <%= scoreColor(c.seoScore || 0) %> mb-3">
+          <span class="text-3xl font-bold leading-none"><%= c.seoScore || 0 %></span>
+          <span class="text-xs font-semibold mt-1 opacity-70">/ 100</span>
+        </div>
+        <p class="text-sm font-medium text-slate-900 break-all"><%= c.url || '—' %></p>
+      </div>
+    </div>
+
+    <!-- Detailed Comparison Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-8">
+      <div class="px-6 py-4 border-b border-slate-100">
+        <h2 class="text-base font-bold text-slate-900">Metric Comparison</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-slate-50 text-left">
+              <th class="px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Metric</th>
+              <th class="px-6 py-3 text-xs font-semibold text-indigo-600 uppercase">Your Site</th>
+              <th class="px-6 py-3 text-xs font-semibold text-red-600 uppercase">Competitor</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <%
+              const rows = [
+                ['SEO Score', y.seoScore || 0, c.seoScore || 0, true],
+                ['Title Length', yMeta.titleLength || 0, cMeta.titleLength || 0, false, ' chars'],
+                ['Meta Description', yMeta.metaDescriptionLength || 0, cMeta.metaDescriptionLength || 0, false, ' chars'],
+                ['Word Count', yMeta.wordCount || 0, cMeta.wordCount || 0, true],
+                ['H1 Tags', (yMeta.h1s || []).length, (cMeta.h1s || []).length, false],
+                ['H2 Tags', (yMeta.h2s || []).length, (cMeta.h2s || []).length, true],
+                ['Images w/ Alt', yMeta.imagesWithAlt || 0, cMeta.imagesWithAlt || 0, true],
+                ['Images w/o Alt', yMeta.imagesWithoutAlt || 0, cMeta.imagesWithoutAlt || 0, false],
+                ['Internal Links', yMeta.internalLinks || 0, cMeta.internalLinks || 0, true],
+                ['External Links', yMeta.externalLinks || 0, cMeta.externalLinks || 0, true],
+                ['HTTPS', yMeta.hasHttps ? 'Yes' : 'No', cMeta.hasHttps ? 'Yes' : 'No'],
+                ['Schema Markup', yMeta.schemaMarkupCount || 0, cMeta.schemaMarkupCount || 0, true],
+                ['HTML Size', (yMeta.htmlSizeKB || 0) + ' KB', (cMeta.htmlSizeKB || 0) + ' KB'],
+                ['Total Issues', yIssues.total || 0, cIssues.total || 0, false],
+                ['High Issues', yIssues.high || 0, cIssues.high || 0, false],
+                ['Broken Links', (yBL.broken || []).length, (cBL.broken || []).length, false],
+              ];
+
+              if (yPS.performance || cPS.performance) {
+                rows.push(
+                  ['PageSpeed Performance', yPS.performance || '—', cPS.performance || '—', true],
+                  ['PageSpeed SEO', yPS.seo || '—', cPS.seo || '—', true],
+                  ['PageSpeed Accessibility', yPS.accessibility || '—', cPS.accessibility || '—', true],
+                  ['LCP', fmtMs(yCWV.lcp), fmtMs(cCWV.lcp)],
+                  ['TBT', fmtMs(yCWV.tbt), fmtMs(cCWV.tbt)],
+                  ['CLS', yCWV.cls != null ? yCWV.cls.toFixed(3) : '—', cCWV.cls != null ? cCWV.cls.toFixed(3) : '—']
+                );
+              }
+
+              rows.push(
+                ['Sitemap Found', (ySR.sitemap || {}).found ? 'Yes' : 'No', (cSR.sitemap || {}).found ? 'Yes' : 'No'],
+                ['Robots.txt Found', (ySR.robots || {}).found ? 'Yes' : 'No', (cSR.robots || {}).found ? 'Yes' : 'No']
+              );
+            %>
+            <% rows.forEach(function([label, yVal, cVal, higherBetter, suffix]) { %>
+              <tr>
+                <td class="px-6 py-3 font-medium text-slate-700"><%= label %></td>
+                <td class="px-6 py-3"><span class="px-2 py-0.5 rounded-md text-sm font-semibold <%= typeof yVal === 'number' && typeof cVal === 'number' ? compareClass(yVal, cVal, higherBetter) : 'tie' %>"><%= yVal %><%= suffix || '' %></span></td>
+                <td class="px-6 py-3"><span class="px-2 py-0.5 rounded-md text-sm font-semibold <%= typeof yVal === 'number' && typeof cVal === 'number' ? compareClass(cVal, yVal, higherBetter) : 'tie' %>"><%= cVal %><%= suffix || '' %></span></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Issues Breakdown -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Your Issues -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <h3 class="text-base font-bold text-slate-900 mb-4">Your Site Issues (<%= yIssues.total %>)</h3>
+        <div class="flex gap-3 mb-4">
+          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700"><%= yIssues.high %> High</span>
+          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700"><%= yIssues.medium %> Medium</span>
+          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600"><%= yIssues.low %> Low</span>
+        </div>
+        <ul class="space-y-1.5 text-sm text-slate-700 max-h-60 overflow-y-auto">
+          <% (y.recommendations || []).slice(0, 15).forEach(function(rec) { %>
+            <li class="flex gap-2"><span class="text-red-400 shrink-0">•</span> <%= rec %></li>
+          <% }); %>
+        </ul>
+      </div>
+
+      <!-- Competitor Issues -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <h3 class="text-base font-bold text-slate-900 mb-4">Competitor Issues (<%= cIssues.total %>)</h3>
+        <div class="flex gap-3 mb-4">
+          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700"><%= cIssues.high %> High</span>
+          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700"><%= cIssues.medium %> Medium</span>
+          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600"><%= cIssues.low %> Low</span>
+        </div>
+        <ul class="space-y-1.5 text-sm text-slate-700 max-h-60 overflow-y-auto">
+          <% (c.recommendations || []).slice(0, 15).forEach(function(rec) { %>
+            <li class="flex gap-2"><span class="text-red-400 shrink-0">•</span> <%= rec %></li>
+          <% }); %>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Key Takeaways -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-8">
+      <div class="flex items-center gap-2 mb-4">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+        </div>
+        <h2 class="text-base font-bold text-slate-900">Key Takeaways</h2>
+      </div>
+      <div class="space-y-3 text-sm text-slate-700">
+        <% const yScore = y.seoScore || 0; const cScore = c.seoScore || 0; %>
+        <% if (yScore > cScore) { %>
+          <p class="flex gap-2"><span class="text-green-500 font-bold">✓</span> Your site scores <strong><%= yScore - cScore %> points higher</strong> than your competitor. Maintain your lead by addressing remaining issues.</p>
+        <% } else if (cScore > yScore) { %>
+          <p class="flex gap-2"><span class="text-red-500 font-bold">✗</span> Your competitor scores <strong><%= cScore - yScore %> points higher</strong>. Focus on fixing your High-impact issues to close the gap.</p>
+        <% } else { %>
+          <p class="flex gap-2"><span class="text-amber-500 font-bold">≈</span> Both sites have the <strong>same SEO score</strong>. Differentiate by fixing issues faster than your competitor.</p>
+        <% } %>
+
+        <% if ((yMeta.wordCount || 0) < (cMeta.wordCount || 0)) { %>
+          <p class="flex gap-2"><span class="text-red-500 font-bold">✗</span> Your competitor has <strong><%= (cMeta.wordCount || 0) - (yMeta.wordCount || 0) %> more words</strong> of content. Consider expanding your page with in-depth information, FAQs, or guides.</p>
+        <% } %>
+
+        <% if ((yBL.broken || []).length > (cBL.broken || []).length) { %>
+          <p class="flex gap-2"><span class="text-red-500 font-bold">✗</span> You have <strong>more broken links</strong> than your competitor. Fix these to improve user experience and crawlability.</p>
+        <% } %>
+
+        <% if (yPS.performance && cPS.performance && yPS.performance < cPS.performance) { %>
+          <p class="flex gap-2"><span class="text-red-500 font-bold">✗</span> Your competitor's <strong>PageSpeed performance is higher</strong> (<%= cPS.performance %> vs. <%= yPS.performance %>). Optimize images, reduce JS, and leverage browser caching.</p>
+        <% } %>
+      </div>
+    </div>
+
+  </main>
+  <%- include('partials/footer') %>
+</body>
+</html>

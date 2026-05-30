@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <%- include('partials/header') %>
+  <main class="max-w-3xl mx-auto px-4 py-12 flex-1 w-full">
+    <h1 class="text-3xl font-bold text-slate-900 mb-2">Privacy Policy</h1>
+    <p class="text-sm text-slate-400 mb-8">Last updated: <%= new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></p>
+
+    <div class="prose prose-slate max-w-none space-y-6">
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">1. Information We Collect</h2>
+        <p class="text-sm text-slate-600 leading-relaxed mb-3">When you create an account on AuditPro, we collect:</p>
+        <ul class="list-disc list-inside text-sm text-slate-600 space-y-1">
+          <li><strong>Account information:</strong> Your name, email address, and hashed password.</li>
+          <li><strong>Audit data:</strong> URLs you submit for auditing, audit results, and keyword tracking data.</li>
+          <li><strong>Payment information:</strong> Payment transactions are processed by Razorpay. We do not store your card details.</li>
+          <li><strong>Usage data:</strong> Pages visited, features used, and interactions within the platform.</li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">2. How We Use Your Information</h2>
+        <ul class="list-disc list-inside text-sm text-slate-600 space-y-1">
+          <li>To provide and maintain the AuditPro service.</li>
+          <li>To process your SEO audits and generate reports.</li>
+          <li>To send transactional emails (verification, password reset, audit reports).</li>
+          <li>To process payments and manage subscriptions.</li>
+          <li>To improve our services and develop new features.</li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">3. Data Storage & Security</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">Your data is stored securely using Supabase (PostgreSQL). We use industry-standard security measures including:</p>
+        <ul class="list-disc list-inside text-sm text-slate-600 space-y-1 mt-2">
+          <li>Passwords hashed with bcrypt (12 rounds).</li>
+          <li>JWT-based authentication with HttpOnly cookies.</li>
+          <li>HTTPS encryption for all data in transit.</li>
+          <li>Helmet security headers and rate limiting.</li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">4. Data Sharing</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">We do not sell your personal data to third parties. We may share data with:</p>
+        <ul class="list-disc list-inside text-sm text-slate-600 space-y-1 mt-2">
+          <li><strong>Razorpay:</strong> For payment processing.</li>
+          <li><strong>Supabase:</strong> For database hosting.</li>
+          <li><strong>Email providers:</strong> For sending transactional emails.</li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">5. Your Rights</h2>
+        <p class="text-sm text-slate-600 leading-relaxed mb-3">You have the right to:</p>
+        <ul class="list-disc list-inside text-sm text-slate-600 space-y-1">
+          <li><strong>Access:</strong> View all your stored data via your dashboard and settings.</li>
+          <li><strong>Export:</strong> Download all your audit data in JSON or CSV format from the dashboard.</li>
+          <li><strong>Rectification:</strong> Update your profile information in account settings.</li>
+          <li><strong>Deletion:</strong> Permanently delete your account and all associated data from settings.</li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">6. Cookies</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">We use a single essential cookie (<code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs">token</code>) for authentication. This is a session cookie required for the service to function. We do not use tracking or advertising cookies.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">7. Changes to This Policy</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">We may update this Privacy Policy from time to time. We will notify registered users of significant changes via email.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">8. Contact</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">For privacy-related questions, contact us at <a href="mailto:privacy@auditpro.com" class="text-indigo-600 hover:underline">privacy@auditpro.com</a>.</p>
+      </section>
+    </div>
+  </main>
+  <%- include('partials/footer') %>
+</body>
+</html>

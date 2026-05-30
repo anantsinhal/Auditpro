@@ -1,0 +1,195 @@
+<footer class="bg-slate-900 text-slate-400 mt-auto">
+  <div class="max-w-6xl mx-auto px-4 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+      <!-- Brand -->
+      <div class="md:col-span-1">
+        <a href="/" class="flex items-center gap-2 mb-3">
+          <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+            <svg class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <span class="text-lg font-bold text-white">AuditPro</span>
+        </a>
+        <p class="text-sm text-slate-500 leading-relaxed">AI-powered SEO audits and competitor analysis to grow your online presence.</p>
+      </div>
+      <!-- Product -->
+      <div>
+        <h4 class="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-3">Product</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/audit" class="hover:text-white transition-colors">SEO Audit</a></li>
+          <li><a href="/local-audit" class="hover:text-white transition-colors">Restaurant Audit</a></li>
+          <li><a href="/compare" class="hover:text-white transition-colors">Competitor Compare</a></li>
+        </ul>
+      </div>
+      <!-- Company -->
+      <div>
+        <h4 class="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-3">Company</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/pricing" class="hover:text-white transition-colors">Pricing</a></li>
+          <li><a href="/" class="hover:text-white transition-colors">About</a></li>
+          <li><a href="/privacy" class="hover:text-white transition-colors">Privacy Policy</a></li>
+          <li><a href="/terms" class="hover:text-white transition-colors">Terms of Service</a></li>
+        </ul>
+      </div>
+      <!-- Get Started -->
+      <div>
+        <h4 class="text-sm font-semibold text-slate-200 uppercase tracking-wider mb-3">Get Started</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/register" class="hover:text-white transition-colors">Create Account</a></li>
+          <li><a href="/login" class="hover:text-white transition-colors">Sign In</a></li>
+        </ul>
+      </div>
+    </div>
+    <!-- Bottom bar -->
+    <div class="border-t border-slate-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-500">
+      <p>&copy; <%= new Date().getFullYear() %> AuditPro. All rights reserved.</p>
+      <div class="flex items-center gap-4 text-xs">
+        <a href="/privacy" class="hover:text-white transition-colors">Privacy</a>
+        <a href="/terms" class="hover:text-white transition-colors">Terms</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Cookie Consent Banner -->
+<div id="cookie-consent" class="fixed bottom-0 inset-x-0 z-50 translate-y-full transition-transform duration-500" style="transform:translateY(100%)">
+  <div class="max-w-4xl mx-auto px-4 pb-4">
+    <div class="bg-slate-900/95 backdrop-blur-lg border border-slate-700/50 rounded-2xl shadow-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div class="flex items-start gap-3 flex-1">
+        <svg class="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+        <p class="text-sm text-slate-300 leading-relaxed">We use a single essential cookie (JWT) for authentication. No tracking or advertising cookies. By continuing, you agree to our <a href="/privacy" class="text-indigo-400 hover:text-indigo-300 underline">Privacy Policy</a>.</p>
+      </div>
+      <div class="flex gap-2 shrink-0">
+        <button id="cookie-accept" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">Accept</button>
+        <button id="cookie-dismiss" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">Dismiss</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  var banner = document.getElementById('cookie-consent');
+  if (!banner) return;
+  // Show banner if not yet accepted
+  if (!localStorage.getItem('cookie_consent')) {
+    setTimeout(function(){ banner.style.transform = 'translateY(0)'; }, 800);
+  }
+  // Accept / dismiss handler
+  function hideBanner() {
+    try { localStorage.setItem('cookie_consent', '1'); } catch(e) {}
+    banner.style.transform = 'translateY(100%)';
+    setTimeout(function(){ banner.style.display = 'none'; }, 600);
+  }
+  var acceptBtn = document.getElementById('cookie-accept');
+  var dismissBtn = document.getElementById('cookie-dismiss');
+  if (acceptBtn) acceptBtn.addEventListener('click', hideBanner);
+  if (dismissBtn) dismissBtn.addEventListener('click', hideBanner);
+})();
+</script>
+
+<!-- Assistant Widget -->
+<% const _assistantMode = (typeof user !== 'undefined' && user) ? 'auth' : 'guest'; %>
+<% const _assistantPlan = (typeof user !== 'undefined' && user && user.plan) ? user.plan : 'free'; %>
+<div
+  id="assistant-widget"
+  class="fixed bottom-6 right-6 z-40"
+  data-user-id="<%= (typeof user !== 'undefined' && user) ? (user.id || user._id || '') : 'guest' %>"
+  data-assistant-mode="<%= _assistantMode %>"
+  data-user-plan="<%= _assistantPlan %>"
+>
+    <!-- Tooltip bubble (like screenshot) -->
+    <div id="assistant-tooltip" class="hidden absolute bottom-2 right-16 max-w-56">
+      <div class="relative bg-white border border-slate-200 shadow-lg rounded-2xl px-4 py-3">
+        <p class="text-sm font-medium text-slate-800">Hi, how can I help you today!</p>
+        <span class="absolute top-1/2 -right-2 w-4 h-4 bg-white border-r border-t border-slate-200 rotate-45 -translate-y-1/2"></span>
+      </div>
+    </div>
+
+    <!-- Toggle button -->
+    <button
+      id="assistant-toggle"
+      type="button"
+      class="w-14 h-14 rounded-full bg-white border border-slate-200 shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center text-slate-700"
+      aria-label="Open assistant"
+      aria-expanded="false"
+    >
+      <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 2v2" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 6h8a3 3 0 013 3v6a4 4 0 01-4 4H9a4 4 0 01-4-4V9a3 3 0 013-3z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 11v2" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M20 11v2" />
+        <circle cx="9.5" cy="12" r="1" fill="currentColor" stroke="none" />
+        <circle cx="14.5" cy="12" r="1" fill="currentColor" stroke="none" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15h6" />
+      </svg>
+    </button>
+
+    <!-- Panel -->
+    <div
+      id="assistant-panel"
+      class="hidden absolute bottom-16 right-0 w-88 max-w-[90vw] bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden"
+      role="dialog"
+      aria-label="Assistant"
+    >
+      <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-900">Assistant</p>
+          <p class="text-xs text-slate-500">Ask about AuditPro or SEO basics</p>
+        </div>
+        <button id="assistant-close" type="button" class="p-2 rounded-lg hover:bg-slate-100 text-slate-500" aria-label="Close assistant">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div id="assistant-messages" class="h-72 overflow-y-auto px-4 py-3 space-y-2 bg-slate-50"></div>
+
+      <div class="p-3 border-t border-slate-200 bg-white">
+        <% if (_assistantMode === 'auth') { %>
+          <form id="assistant-form" class="flex items-center gap-2">
+            <input id="assistant-image" type="file" accept="image/*" class="hidden" />
+            <button
+              id="assistant-attach"
+              type="button"
+              class="px-3 py-2 rounded-xl text-sm font-medium border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
+              aria-label="Attach image"
+              title="Attach image (Pro)"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.44 11.05l-8.49 8.49a5 5 0 01-7.07-7.07l9.19-9.19a3.5 3.5 0 114.95 4.95l-9.19 9.19a2 2 0 11-2.83-2.83l8.49-8.49" />
+              </svg>
+            </button>
+            <input
+              id="assistant-input"
+              type="text"
+              autocomplete="off"
+              placeholder="Type a message…"
+              class="flex-1 min-w-0 px-3 py-2 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-colors"
+            />
+            <button
+              id="assistant-send"
+              type="submit"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+            >
+              Send
+            </button>
+          </form>
+        <% } else { %>
+          <div class="flex items-center gap-2">
+            <a
+              href="/login"
+              class="w-full text-center bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-xl text-sm font-medium transition-colors"
+            >
+              Log in to chat
+            </a>
+          </div>
+        <% } %>
+        <p id="assistant-error" class="hidden mt-2 text-xs text-red-600"></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/assistant.js" defer></script>
+

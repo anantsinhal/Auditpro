@@ -1,0 +1,44 @@
+{
+  "name": "auditpro",
+  "version": "1.0.0",
+  "description": "Website Audit SaaS - SEO and performance audits",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "build:css": "npx @tailwindcss/cli -c ./frontend/tailwind.config.js -i ./frontend/src/input.css -o ./frontend/public/css/style.css --minify",
+    "watch:css": "npx @tailwindcss/cli -c ./frontend/tailwind.config.js -i ./frontend/src/input.css -o ./frontend/public/css/style.css --watch"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.97.0",
+    "axios": "^1.13.5",
+    "bcryptjs": "^2.4.3",
+    "cheerio": "^1.0.0-rc.12",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "html-pdf-node": "^1.0.8",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "nodemailer": "^8.0.1",
+    "nodemon": "^3.1.14",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "razorpay": "^2.9.2",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.2.1",
+    "node-fetch": "^3.3.2",
+    "tailwindcss": "^4.2.1"
+  }
+}

@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <%
+    const _isPdf = !(typeof isPdf === 'undefined' || !isPdf);
+    const _assetBase = (typeof assetBaseUrl !== 'undefined' && assetBaseUrl) ? String(assetBaseUrl).replace(/\/+$/, '') : '';
+    const _cssHref = _assetBase ? `${_assetBase}/css/style.css` : '/css/style.css';
+    const _iconHref = _assetBase ? `${_assetBase}/favicon.svg` : '/favicon.svg';
+  %>
+  <% if (_isPdf && typeof pdfCss !== 'undefined' && pdfCss) { %>
+    <style><%- pdfCss %></style>
+  <% } else { %>
+    <link rel="stylesheet" href="<%= _cssHref %>">
+    <link rel="icon" type="image/svg+xml" href="<%= _iconHref %>">
+  <% } %>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .issue-card { transition: all 0.2s ease; }
+    .issue-card:hover { background-color: #f8fafc; }
+    .issue-body { display: none; }
+    .issue-body.open { display: block; }
+    .chevron { transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+    pre { white-space: pre-wrap; overflow-x: auto; }
+    .score-ring-gradient { background: conic-gradient(from 0deg, #6366f1 0%, #a855f7 50%, #6366f1 100%); }
+    /* Local utility to avoid mid-word breaks without rebuilding CSS */
+    .wrap-break-word { overflow-wrap: break-word; word-break: break-word; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <% if (typeof isPdf === 'undefined' || !isPdf) { %>
+    <%- include('partials/header') %>
+  <% } %>
+
+  <%
+    const r = audit.results || {};
+    const meta = r.pageMetadata || {};
+    const catIssues = r.categorisedIssues || { technicalSEO: [], onPageSEO: [], contentSEO: [], performance: [] };
+    const summary = r.issuesSummary || { total: 0, high: 0, medium: 0, low: 0 };
+    const optMeta = r.optimizedMeta || {};
+    const plan = r.actionPlan || {};
+    const seoScore = audit.seo_score || audit.seoScore || 0;
+    const createdAt = audit.created_at || audit.createdAt || new Date().toISOString();
+    const allCategories = [
+      { key: 'technicalSEO',  label: 'Technical SEO',  dotColor: 'bg-purple-500', bg: 'bg-purple-50', border: 'border-purple-200', badge: 'bg-purple-100 text-purple-800' },
+      { key: 'onPageSEO',     label: 'On-page SEO',    dotColor: 'bg-blue-500',   bg: 'bg-blue-50',   border: 'border-blue-200',   badge: 'bg-blue-100 text-blue-800' },
+      { key: 'contentSEO',    label: 'Content SEO',    dotColor: 'bg-teal-500',   bg: 'bg-teal-50',   border: 'border-teal-200',   badge: 'bg-teal-100 text-teal-800' },
+      { key: 'performance',   label: 'Performance',    dotColor: 'bg-orange-500', bg: 'bg-orange-50', border: 'border-orange-200', badge: 'bg-orange-100 text-orange-800' },
+      { key: 'accessibility', label: 'Accessibility',  dotColor: 'bg-pink-500',   bg: 'bg-pink-50',   border: 'border-pink-200',   badge: 'bg-pink-100 text-pink-800' }
+    ];
+    const impactColor = (impact) => {
+      if (impact === 'High')   return 'bg-red-100 text-red-700 border border-red-200';
+      if (impact === 'Medium') return 'bg-amber-100 text-amber-700 border border-amber-200';
+      return 'bg-slate-100 text-slate-600 border border-slate-200';
+    };
+    const scoreColor = (s) => s >= 70 ? 'text-green-700 bg-green-100' : s >= 40 ? 'text-amber-700 bg-amber-100' : 'text-red-700 bg-red-100';
+    const scoreRingColor = (s) => s >= 70 ? 'ring-green-400' : s >= 40 ? 'ring-amber-400' : 'ring-red-400';
+    const psi = r.pageSpeedInsights || null;
+    const cwv = psi ? (psi.coreWebVitals || {}) : {};
+    const sr = r.sitemapRobots || { sitemap: { found: false, issues: [] }, robots: { found: false, issues: [] } };
+    const bl = r.brokenLinks || { totalOnPage: 0, checked: 0, broken: [], redirects: [], healthy: 0 };
+    const aiText = (audit.ai_insights || r.ai_insights || '').trim();
+    const crawlBlock = r.crawlBlock || null;
+    const isCrawlBlocked = !!(crawlBlock && crawlBlock.blocked);
+    const og = (meta.openGraph) || { title: '(none)', description: '(none)', image: '(none)' };
+    const twCard = meta.twitterCard || '(none)';
+    const fmtMs = (ms) => { if (ms == null) return '—'; return ms >= 1000 ? (ms / 1000).toFixed(1) + 's' : Math.round(ms) + 'ms'; };
+    const cwvColor = (name, val) => {
+      if (val == null) return 'text-slate-400';
+      if (name === 'lcp') return val <= 2500 ? 'text-green-600' : val <= 4000 ? 'text-amber-600' : 'text-red-600';
+      if (name === 'fid' || name === 'tbt') return val <= 200 ? 'text-green-600' : val <= 600 ? 'text-amber-600' : 'text-red-600';
+      if (name === 'cls') return val <= 0.1 ? 'text-green-600' : val <= 0.25 ? 'text-amber-600' : 'text-red-600';
+      if (name === 'fcp') return val <= 1800 ? 'text-green-600' : val <= 3000 ? 'text-amber-600' : 'text-red-600';
+      if (name === 'ttfb') return val <= 800 ? 'text-green-600' : val <= 1800 ? 'text-amber-600' : 'text-red-600';
+      return 'text-slate-700';
+    };
+    const weeks = [
+      { key: 'week1_days1to7',  label: 'Week 1 — Days 1–7',  dotColor: 'bg-red-500' },
+      { key: 'week2_days8to14', label: 'Week 2 — Days 8–14', dotColor: 'bg-amber-500' },
+      { key: 'week3_days15to21',label: 'Week 3 — Days 15–21',dotColor: 'bg-blue-500' },
+      { key: 'week4_days22to30',label: 'Week 4 — Days 22–30', dotColor: 'bg-green-500' }
+    ];
+  %>
+
+  <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full">
+
+    <!-- Back -->
+    <% if (typeof isPdf === 'undefined' || !isPdf) { %>
+    <div class="mb-6 flex justify-between items-center">
+      <a href="/dashboard" class="text-sm text-slate-500 hover:text-indigo-600 transition-colors flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+        Dashboard
+      </a>
+      <div class="flex gap-2">
+        <button onclick="emailReport()" class="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm">
+          <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+          </svg>
+          Email PDF
+        </button>
+        <a href="/audit/<%= audit.id %>/pdf" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-2 shadow-sm">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download PDF
+        </a>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Header Banner -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+        <!-- Score Ring -->
+        <div class="flex-shrink-0">
+          <div class="w-28 h-28 rounded-full ring-4 <%= scoreRingColor(seoScore) %> ring-offset-4 flex flex-col items-center justify-center <%= scoreColor(seoScore) %> shadow-lg">
+            <span class="text-3xl font-bold leading-none"><%= seoScore %></span>
+            <span class="text-xs font-semibold mt-1 opacity-70">/ 100</span>
+          </div>
+        </div>
+        <!-- Page Info -->
+        <div class="flex-1 min-w-0">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">SEO Audit Report</p>
+          <h1 class="text-lg font-bold text-slate-900 break-all"><%= audit.url %></h1>
+          <p class="text-sm text-slate-500 mt-1"><%= new Date(createdAt).toLocaleString() %></p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-red-100 text-red-700"><span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span><%= summary.high %> High</span>
+            <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-amber-100 text-amber-700"><span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span><%= summary.medium %> Medium</span>
+            <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-slate-100 text-slate-600"><span class="w-2 h-2 rounded-full bg-slate-400 inline-block"></span><%= summary.low %> Low</span>
+            <span class="inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full bg-slate-200 text-slate-700"><%= summary.total %> Total Issues</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <% if (isCrawlBlocked) { %>
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6">
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
+            <span class="text-amber-700 font-bold">!</span>
+          </div>
+          <div class="min-w-0">
+            <h2 class="text-sm font-bold text-amber-900">Audit incomplete: this site blocked the crawl</h2>
+            <p class="text-sm text-amber-800 mt-1 leading-snug">
+              We hit <span class="font-semibold"><%= crawlBlock.reason || 'a security check' %></span><% if (r.httpStatusCode) { %> (HTTP <%= r.httpStatusCode %>)<% } %>.
+              The values below likely reflect a bot-check page (e.g. “Are you a human?”), not your real page content.
+            </p>
+            <p class="text-xs text-amber-800 mt-2">
+              Fix: try a publicly accessible URL, or relax/allowlist bot protection for this page while auditing.
+            </p>
+          </div>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Grid: Metadata + Optimized Meta -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+      <!-- Page Metadata -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-base font-bold text-slate-900 mb-4">Page Metadata</h2>
+        <dl class="text-sm divide-y divide-slate-100">
+          <%
+            const rawMetaDescription = (meta.metaDescription && meta.metaDescription !== '(none)') ? String(meta.metaDescription).trim() : '';
+            const metaDescriptionDisplay = rawMetaDescription
+              ? (rawMetaDescription.length > 80 ? rawMetaDescription.slice(0, 80) + '…' : rawMetaDescription)
+              : '—';
+
+            const rawTitle = (meta.title || r.title || '').trim();
+            const titleDisplay = rawTitle ? (rawTitle + (meta.titleLength ? ' (' + meta.titleLength + ' chars)' : '')) : '—';
+
+            const metaRows = [
+              ['Title Tag', titleDisplay],
+              ['Meta Description', metaDescriptionDisplay],
+              ['H1 Heading', (meta.h1s && meta.h1s.length > 0) ? meta.h1s[0] : (r.h1Count > 0 ? 'Present' : '—')],
+              ['Word Count', (meta.wordCount || r.wordCount || 0) + ' words'],
+              ['HTTPS', (meta.hasHttps !== undefined ? meta.hasHttps : r.hasHttps) ? '✓ Secure' : '✗ Not Secure'],
+              ['Canonical', meta.canonical && meta.canonical !== '(none)' ? '✓ Present' : '✗ Missing'],
+              ['Schema Markup', (meta.schemaMarkupCount || 0) > 0 ? '✓ ' + meta.schemaMarkupCount + ' block(s)' : '✗ Missing'],
+              ['Open Graph', (meta.openGraph && meta.openGraph.title !== '(none)') ? '✓ Present' : '✗ Missing'],
+              ['Robots Meta', meta.robotsMeta || 'index, follow (default)'],
+              ['HTML Size', (meta.htmlSizeKB || 0) + ' KB'],
+              ['Internal Links', (meta.internalLinks || 0) + ' found'],
+              ['Images w/ Alt', (meta.imagesWithAlt || r.imagesWithAlt || 0) + ' / ' + (meta.totalImages || 0)],
+            ];
+          %>
+          <% metaRows.forEach(([label, value]) => { %>
+            <div class="py-2 flex items-start justify-between gap-4">
+              <dt class="text-slate-500 font-medium w-36 shrink-0"><%= label %></dt>
+              <dd class="text-slate-900 text-right wrap-break-word min-w-0 flex-1"><%= value %></dd>
+            </div>
+          <% }); %>
+        </dl>
+      </div>
+
+      <!-- Optimized Meta Suggestions -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col gap-4">
+        <h2 class="text-base font-bold text-slate-900">AI-Generated Optimised Meta</h2>
+
+        <% if (isCrawlBlocked) { %>
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">Skipped</p>
+            <p class="text-sm text-amber-900">AI meta suggestions are disabled because the page content could not be crawled reliably.</p>
+          </div>
+        <% } else { %>
+          <% if (optMeta.improvedH1) { %>
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+            <p class="text-xs font-semibold text-indigo-500 uppercase tracking-wider mb-1">Improved H1</p>
+            <p class="text-sm font-semibold text-indigo-900"><%= optMeta.improvedH1 %></p>
+          </div>
+          <% } %>
+
+          <% if (optMeta.metaDescription) { %>
+          <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+            <p class="text-xs font-semibold text-green-600 uppercase tracking-wider mb-1">Optimised Meta Description</p>
+            <p class="text-sm text-green-900"><%= optMeta.metaDescription %></p>
+            <p class="text-xs text-green-600 mt-1"><%= (optMeta.metaDescription || '').length %> chars</p>
+          </div>
+          <% } %>
+
+          <% if (optMeta.semanticKeywords && optMeta.semanticKeywords.length > 0) { %>
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Semantic Keyword Suggestions</p>
+            <div class="flex flex-wrap gap-2">
+              <% optMeta.semanticKeywords.forEach(kw => { %>
+                <span class="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-medium"># <%= kw %></span>
+              <% }); %>
+            </div>
+          </div>
+          <% } %>
+
+          <% if (optMeta.internalLinkingSuggestions && optMeta.internalLinkingSuggestions.length > 0) { %>
+          <div>
+            <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Internal Linking Suggestions</p>
+            <div class="space-y-2">
+              <% optMeta.internalLinkingSuggestions.forEach(link => { %>
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm">
+                  <p class="font-medium text-slate-800">"<%= link.anchorText %>" → <code class="text-indigo-600 text-xs"><%= link.suggestedTarget %></code></p>
+                  <p class="text-slate-500 text-xs mt-1"><%= link.rationale %></p>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+          <% } %>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (aiText) { %>
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+        <h2 class="text-base font-bold text-slate-900 mb-3">AI Suggestions</h2>
+        <pre class="text-sm text-slate-700"><%= aiText %></pre>
+      </div>
+    <% } %>
+
+    <!-- PageSpeed Insights / Core Web Vitals -->
+    <% if (psi) { %>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+      <h2 class="text-base font-bold text-slate-900 mb-4">PageSpeed Insights (Mobile)</h2>
+      <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto rounded-full ring-2 <%= psi.performance >= 70 ? 'ring-green-400' : psi.performance >= 40 ? 'ring-amber-400' : 'ring-red-400' %> ring-offset-1 flex items-center justify-center <%= psi.performance >= 70 ? 'text-green-700 bg-green-50' : psi.performance >= 40 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50' %>">
+            <span class="text-xl font-bold"><%= psi.performance %></span>
+          </div>
+          <p class="text-xs font-semibold text-slate-500 mt-2">Performance</p>
+        </div>
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto rounded-full ring-2 <%= psi.seo >= 70 ? 'ring-green-400' : psi.seo >= 40 ? 'ring-amber-400' : 'ring-red-400' %> ring-offset-1 flex items-center justify-center <%= psi.seo >= 70 ? 'text-green-700 bg-green-50' : psi.seo >= 40 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50' %>">
+            <span class="text-xl font-bold"><%= psi.seo %></span>
+          </div>
+          <p class="text-xs font-semibold text-slate-500 mt-2">SEO</p>
+        </div>
+        <div class="text-center">
+          <div class="w-16 h-16 mx-auto rounded-full ring-2 <%= psi.accessibility >= 70 ? 'ring-green-400' : psi.accessibility >= 40 ? 'ring-amber-400' : 'ring-red-400' %> ring-offset-1 flex items-center justify-center <%= psi.accessibility >= 70 ? 'text-green-700 bg-green-50' : psi.accessibility >= 40 ? 'text-amber-700 bg-amber-50' : 'text-red-700 bg-red-50' %>">
+            <span class="text-xl font-bold"><%= psi.accessibility %></span>
+          </div>
+          <p class="text-xs font-semibold text-slate-500 mt-2">Accessibility</p>
+        </div>
+      </div>
+      <h3 class="text-sm font-bold text-slate-700 mb-3">Core Web Vitals</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <% [['LCP', 'lcp'], ['FCP', 'fcp'], ['TBT', 'tbt'], ['CLS', 'cls'], ['TTFB', 'ttfb'], ['Speed Index', 'si']].forEach(function([label, key]) { %>
+          <div class="bg-slate-50 rounded-lg p-3 text-center">
+            <p class="text-xs text-slate-500 font-medium mb-1"><%= label %></p>
+            <p class="text-lg font-bold <%= cwvColor(key, cwv[key]) %>"><%= key === 'cls' && cwv[key] != null ? cwv[key].toFixed(3) : fmtMs(cwv[key]) %></p>
+          </div>
+        <% }); %>
+      </div>
+      <% if (psi.opportunities && psi.opportunities.length > 0) { %>
+      <h3 class="text-sm font-bold text-slate-700 mt-5 mb-3">Optimization Opportunities</h3>
+      <ul class="space-y-2">
+        <% psi.opportunities.forEach(function(opp) { %>
+          <li class="flex items-start gap-2 text-sm">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 shrink-0"></span>
+            <div>
+              <span class="font-medium text-slate-800"><%= opp.title %></span>
+              <% if (opp.savings) { %><span class="text-xs text-slate-500 ml-1">(~<%= (opp.savings / 1000).toFixed(1) %>s savings)</span><% } %>
+            </div>
+          </li>
+        <% }); %>
+      </ul>
+      <% } %>
+    </div>
+    <% } %>
+
+    <!-- Social Media Preview -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+      <h2 class="text-base font-bold text-slate-900 mb-4">Social Media Share Preview</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Facebook / LinkedIn Preview -->
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Facebook / LinkedIn</p>
+          <div class="border border-slate-200 rounded-lg overflow-hidden max-w-md">
+            <% if (og.image && og.image !== '(none)') { %>
+              <div class="bg-slate-100 h-40 flex items-center justify-center overflow-hidden">
+                <img src="<%= og.image %>" alt="OG Preview" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\'text-slate-400 text-sm\'>Image failed to load</span>'">
+              </div>
+            <% } else { %>
+              <div class="bg-slate-100 h-40 flex items-center justify-center">
+                <span class="text-slate-400 text-sm">No OG image set</span>
+              </div>
+            <% } %>
+            <div class="p-3 bg-slate-50">
+              <p class="text-xs text-slate-400 uppercase"><%= (audit.url || '').replace(/^https?:\/\//, '').split('/')[0] %></p>
+              <p class="text-sm font-semibold text-slate-900 mt-0.5 line-clamp-2"><%= og.title !== '(none)' ? og.title : (meta.title || 'No title set') %></p>
+              <p class="text-xs text-slate-500 mt-0.5 line-clamp-2"><%= og.description !== '(none)' ? og.description : (meta.metaDescription !== '(none)' ? meta.metaDescription : 'No description set') %></p>
+            </div>
+          </div>
+        </div>
+        <!-- Twitter/X Preview -->
+        <div>
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Twitter / X <span class="text-slate-400">(<%= twCard !== '(none)' ? twCard : 'no card set' %>)</span></p>
+          <div class="border border-slate-200 rounded-2xl overflow-hidden max-w-md">
+            <% if (og.image && og.image !== '(none)') { %>
+              <div class="bg-slate-100 h-40 flex items-center justify-center overflow-hidden">
+                <img src="<%= og.image %>" alt="Twitter Preview" class="w-full h-full object-cover" onerror="this.parentElement.innerHTML='<span class=\'text-slate-400 text-sm\'>Image failed to load</span>'">
+              </div>
+            <% } else { %>
+              <div class="bg-slate-100 h-40 flex items-center justify-center">
+                <span class="text-slate-400 text-sm">No preview image</span>
+              </div>
+            <% } %>
+            <div class="p-3">
+              <p class="text-sm font-semibold text-slate-900 line-clamp-2"><%= og.title !== '(none)' ? og.title : (meta.title || 'No title') %></p>
+              <p class="text-xs text-slate-500 mt-0.5 line-clamp-2"><%= og.description !== '(none)' ? og.description : 'No description' %></p>
+              <p class="text-xs text-slate-400 mt-1 flex items-center gap-1"><svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg><%= (audit.url || '').replace(/^https?:\/\//, '').split('/')[0] %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% if (og.title === '(none)' || og.image === '(none)') { %>
+      <div class="mt-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <p class="text-xs text-amber-800"><strong>Tip:</strong> Missing Open Graph tags means social platforms generate their own (often ugly) previews. Add og:title, og:description, og:image, and og:url tags to control how your page looks when shared.</p>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Sitemap & Robots.txt -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-8 h-8 rounded-lg flex items-center justify-center text-lg <%= sr.sitemap.found ? 'bg-green-100' : 'bg-red-100' %>"><%= sr.sitemap.found ? '✓' : '✗' %></span>
+          <h3 class="text-sm font-bold text-slate-900">sitemap.xml</h3>
+        </div>
+        <% if (sr.sitemap.found) { %>
+          <p class="text-sm text-green-700 mb-1">Found — <strong><%= sr.sitemap.urlCount %></strong> URL<%= sr.sitemap.urlCount !== 1 ? 's' : '' %><%= sr.sitemap.isIndex ? ' (Sitemap Index)' : '' %></p>
+        <% } %>
+        <% (sr.sitemap.issues || []).forEach(function(issue) { %>
+          <p class="text-xs text-red-600 mt-1">• <%= issue %></p>
+        <% }); %>
+        <% if (sr.sitemap.found && (sr.sitemap.issues || []).length === 0) { %>
+          <p class="text-xs text-green-600">No issues detected.</p>
+        <% } %>
+      </div>
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="w-8 h-8 rounded-lg flex items-center justify-center text-lg <%= sr.robots.found ? 'bg-green-100' : 'bg-red-100' %>"><%= sr.robots.found ? '✓' : '✗' %></span>
+          <h3 class="text-sm font-bold text-slate-900">robots.txt</h3>
+        </div>
+        <% if (sr.robots.found && sr.robots.valid) { %>
+          <p class="text-sm text-green-700 mb-1">Found and valid — <strong><%= (sr.robots.rules || []).length %></strong> directive<%= (sr.robots.rules || []).length !== 1 ? 's' : '' %></p>
+        <% } %>
+        <% (sr.robots.issues || []).forEach(function(issue) { %>
+          <p class="text-xs text-red-600 mt-1">• <%= issue %></p>
+        <% }); %>
+        <% if (sr.robots.found && sr.robots.valid && (sr.robots.issues || []).length === 0) { %>
+          <p class="text-xs text-green-600">No issues detected.</p>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Broken Links -->
+    <% if (bl.checked > 0) { %>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-bold text-slate-900">Broken Link Check</h2>
+        <div class="flex gap-3 text-xs font-semibold">
+          <span class="px-2 py-1 rounded-full bg-green-100 text-green-700"><%= bl.healthy %> Healthy</span>
+          <span class="px-2 py-1 rounded-full bg-red-100 text-red-700"><%= bl.broken.length %> Broken</span>
+          <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700"><%= bl.redirects.length %> Redirects</span>
+          <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-600"><%= bl.checked %>/<%= bl.totalOnPage %> Checked</span>
+        </div>
+      </div>
+      <% if (bl.broken.length > 0) { %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr class="bg-red-50 text-left"><th class="px-4 py-2 text-xs font-semibold text-red-700">Broken URL</th><th class="px-4 py-2 text-xs font-semibold text-red-700">Status</th></tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            <% bl.broken.forEach(function(link) { %>
+              <tr><td class="px-4 py-2 text-red-700 break-all max-w-md"><%= link.url %></td><td class="px-4 py-2 font-mono"><%= link.status || link.error %></td></tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+      <% } else { %>
+        <p class="text-sm text-green-700">All <strong><%= bl.checked %></strong> checked links are healthy. No broken links detected.</p>
+      <% } %>
+      <% if (bl.redirects.length > 0) { %>
+      <details class="mt-4"><summary class="text-xs text-amber-700 font-semibold cursor-pointer hover:underline">View <%= bl.redirects.length %> redirect(s)</summary>
+        <ul class="mt-2 space-y-1 text-xs text-slate-600">
+          <% bl.redirects.forEach(function(r) { %>
+            <li><span class="font-mono text-amber-600"><%= r.status %></span> <span class="break-all"><%= r.url %></span> → <span class="text-slate-400"><%= r.location %></span></li>
+          <% }); %>
+        </ul>
+      </details>
+      <% } %>
+    </div>
+    <% } %>
+
+    <!-- Issues by Category -->
+    <% allCategories.forEach(function(cat) {
+      const issues = (catIssues[cat.key] || []);
+    %>
+    <% if (issues.length > 0) { %>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 mb-6 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <div class="flex items-center gap-2 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full <%= cat.dotColor %>"></span>
+              <span class="text-base font-bold text-slate-900"><%= cat.label %></span>
+            </div>
+        <span class="text-xs font-semibold <%= cat.badge %> px-2.5 py-1 rounded-full"><%= issues.length %> issue<%= issues.length !== 1 ? 's' : '' %></span>
+      </div>
+      <div class="divide-y divide-slate-100">
+        <% issues.forEach(function(issue, idx) { %>
+          <div class="issue-card px-6 py-4">
+            <!-- Issue Header (clickable) -->
+            <button class="w-full flex items-start justify-between gap-3 text-left" onclick="toggleIssue(this)">
+              <div class="flex items-start gap-3 flex-1 min-w-0">
+                <span class="inline-flex items-center mt-0.5 shrink-0 text-xs font-semibold px-2 py-0.5 rounded-md <%= impactColor(issue.impact) %>"><%= issue.impact %></span>
+                <span class="font-semibold text-slate-900 text-sm"><%= issue.title %></span>
+              </div>
+              <svg class="chevron w-4 h-4 text-slate-400 shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+
+            <!-- Issue Body -->
+            <div class="issue-body mt-4 pl-1 space-y-4">
+              <!-- Why Harmful -->
+              <div class="<%= cat.bg %> border <%= cat.border %> rounded-xl p-4">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Why It's Harmful</p>
+                <p class="text-sm text-slate-800"><%= issue.whyHarmful %></p>
+              </div>
+
+              <!-- Fix Steps -->
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Step-by-Step Fix</p>
+                <ol class="space-y-1.5">
+                  <% (issue.fix && issue.fix.steps || []).forEach(function(step, si) { %>
+                    <li class="flex gap-2 text-sm text-slate-700">
+                      <span class="shrink-0 w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-bold flex items-center justify-center mt-0.5 shadow-sm"><%= si + 1 %></span>
+                      <span><%= step %></span>
+                    </li>
+                  <% }); %>
+                </ol>
+              </div>
+
+              <!-- HTML Code -->
+              <% if (issue.fix && issue.fix.htmlCode) { %>
+              <div>
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Ready-to-Copy Code</p>
+                <div class="relative">
+                  <pre class="bg-slate-900 text-green-300 text-xs rounded-xl p-4 overflow-x-auto"><code><%= issue.fix.htmlCode %></code></pre>
+                  <button onclick="copyCode(this)" class="absolute top-2 right-2 text-xs bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded-md transition-colors">Copy</button>
+                </div>
+              </div>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+    <% } %>
+    <% }); %>
+
+    <!-- 30-Day Action Plan -->
+    <% if (Object.keys(plan).length > 0) { %>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+      <h2 class="text-base font-bold text-slate-900 mb-6">30-Day Action Plan</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <% weeks.forEach(function(week) {
+          const weekData = plan[week.key] || {};
+          const tasks = weekData.tasks || [];
+          const focus = weekData.focus || '';
+        %>
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="px-4 py-3 bg-slate-50 border-b border-slate-200">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full <%= week.dotColor %> shrink-0"></span>
+              <span class="text-xs font-bold text-slate-700"><%= week.label %></span>
+            </div>
+            <p class="text-xs text-slate-500 leading-snug"><%= focus %></p>
+          </div>
+          <ul class="divide-y divide-slate-100">
+            <% tasks.forEach(function(task) { %>
+              <li class="px-4 py-2.5 flex items-start gap-2">
+                <span class="mt-1 w-1.5 h-1.5 rounded-full shrink-0 <%=
+                  task.impact === 'High' ? 'bg-red-400' : task.impact === 'Medium' ? 'bg-amber-400' : 'bg-slate-300'
+                %>"></span>
+                <span class="text-xs text-slate-700 leading-snug"><%= task.task %></span>
+              </li>
+            <% }); %>
+            <% if (tasks.length === 0) { %>
+              <li class="px-4 py-3 text-xs text-slate-400 italic">No tasks for this week.</li>
+            <% } %>
+          </ul>
+        </div>
+        <% }); %>
+      </div>
+    </div>
+    <% } %>
+
+    
+
+  </main>
+
+  <% if (typeof isPdf === 'undefined' || !isPdf) { %>
+    <%- include('partials/footer') %>
+  <% } %>
+
+  <script>
+    function toggleIssue(btn) {
+      const card = btn.closest('.issue-card');
+      const body = card.querySelector('.issue-body');
+      const chevron = btn.querySelector('.chevron');
+      body.classList.toggle('open');
+      chevron.classList.toggle('open');
+    }
+
+    function copyCode(btn) {
+      const code = btn.previousElementSibling.querySelector('code').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+      });
+    }
+
+    function emailReport() {
+      const btn = event.target.closest('button');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = 'Sending...';
+      btn.disabled = true;
+      
+      fetch('/audit/<%= audit.id %>/email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          btn.innerHTML = 'Email Sent!';
+          btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+          btn.classList.add('bg-green-500');
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            btn.classList.remove('bg-green-500');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+          }, 3000);
+        } else {
+          btn.innerHTML = 'Failed';
+          btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+          btn.classList.add('bg-red-500');
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            btn.classList.remove('bg-red-500');
+            btn.classList.add('bg-green-600', 'hover:bg-green-700');
+          }, 3000);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        btn.innerHTML = 'Failed';
+        btn.classList.remove('bg-green-600', 'hover:bg-green-700');
+        btn.classList.add('bg-red-500');
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          btn.classList.remove('bg-red-500');
+          btn.classList.add('bg-green-600', 'hover:bg-green-700');
+        }, 3000);
+      });
+    }
+  </script>
+</body>
+</html>

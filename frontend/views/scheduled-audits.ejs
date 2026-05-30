@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <%- include('partials/header') %>
+  <main class="max-w-3xl mx-auto px-4 py-8 flex-1 w-full">
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-slate-900">Scheduled Audits</h1>
+        <p class="text-sm text-slate-500 mt-0.5">Automatically run audits on a recurring schedule</p>
+      </div>
+      <a href="/dashboard" class="text-sm text-indigo-600 hover:text-indigo-700 font-medium">← Dashboard</a>
+    </div>
+
+    <% if (error) { %>
+      <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p class="text-red-800 text-sm"><%= error %></p>
+      </div>
+    <% } %>
+    <% if (success === 'created') { %>
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p class="text-green-800 text-sm">Scheduled audit created successfully!</p>
+      </div>
+    <% } %>
+    <% if (success === 'updated') { %>
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p class="text-green-800 text-sm">Schedule updated.</p>
+      </div>
+    <% } %>
+    <% if (success === 'deleted') { %>
+      <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+        <svg class="w-5 h-5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <p class="text-green-800 text-sm">Schedule removed.</p>
+      </div>
+    <% } %>
+
+    <!-- Add New Schedule -->
+    <div class="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+      <h2 class="text-lg font-semibold text-slate-900 mb-4">Add Scheduled Audit</h2>
+      <form action="/scheduled-audits" method="post" class="flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-[200px]">
+          <label for="url" class="block text-sm font-medium text-slate-700 mb-1">Website URL</label>
+          <input type="url" id="url" name="url" required placeholder="https://example.com" class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm bg-slate-50 focus:bg-white transition-colors">
+        </div>
+        <div class="w-36">
+          <label for="frequency" class="block text-sm font-medium text-slate-700 mb-1">Frequency</label>
+          <select id="frequency" name="frequency" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+            <option value="daily">Daily</option>
+            <option value="weekly" selected>Weekly</option>
+            <option value="monthly">Monthly</option>
+          </select>
+        </div>
+        <button type="submit" class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-indigo-700 text-sm transition-colors">Schedule</button>
+      </form>
+      <p class="text-xs text-slate-400 mt-2">
+        Limit: <%= user.plan === 'pro' ? '10' : '1' %> schedule<%= user.plan === 'pro' ? 's' : '' %> on the <%= user.plan === 'pro' ? 'Pro' : 'Free' %> plan.
+        <% if (user.plan === 'free') { %><a href="/pricing" class="text-indigo-600 hover:underline">Upgrade for more →</a><% } %>
+      </p>
+    </div>
+
+    <!-- Existing Schedules -->
+    <% if (schedules && schedules.length > 0) { %>
+      <h2 class="text-lg font-semibold text-slate-900 mb-3">Your Schedules</h2>
+      <div class="space-y-2">
+        <% schedules.forEach(function(s) { %>
+          <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-indigo-600 truncate"><%= s.url %></p>
+              <div class="flex flex-wrap items-center gap-3 mt-1">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium <%= s.is_active ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500' %>">
+                  <%= s.is_active ? 'Active' : 'Paused' %>
+                </span>
+                <span class="text-xs text-slate-400">Every <%= s.frequency === 'daily' ? 'day' : s.frequency === 'weekly' ? 'week' : 'month' %></span>
+                <% if (s.last_run) { %>
+                  <span class="text-xs text-slate-400">Last: <%= new Date(s.last_run).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
+                <% } %>
+                <% if (s.next_run && s.is_active) { %>
+                  <span class="text-xs text-slate-400">Next: <%= new Date(s.next_run).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) %></span>
+                <% } %>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <form action="/scheduled-audits/<%= s.id %>/toggle" method="post" class="inline">
+                <button type="submit" class="px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors <%= s.is_active ? 'bg-amber-50 hover:bg-amber-100 text-amber-700 border-amber-200' : 'bg-green-50 hover:bg-green-100 text-green-700 border-green-200' %>">
+                  <%= s.is_active ? 'Pause' : 'Resume' %>
+                </button>
+              </form>
+              <form action="/scheduled-audits/<%= s.id %>/delete" method="post" class="inline" onsubmit="return confirm('Delete this schedule?');">
+                <button type="submit" class="px-3 py-1.5 text-xs font-medium rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 transition-colors">Delete</button>
+              </form>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    <% } else { %>
+      <div class="bg-white rounded-2xl border border-slate-200 p-12 text-center">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
+          <svg class="w-8 h-8 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        </div>
+        <h3 class="text-base font-semibold text-slate-900 mb-1">No scheduled audits</h3>
+        <p class="text-sm text-slate-500">Add a URL above to automatically audit it on a recurring basis.</p>
+      </div>
+    <% } %>
+  </main>
+  <%- include('partials/footer') %>
+</body>
+</html>

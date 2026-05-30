@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <%- include('partials/header') %>
+  <main class="max-w-3xl mx-auto px-4 py-12 flex-1 w-full">
+    <h1 class="text-3xl font-bold text-slate-900 mb-2">Terms of Service</h1>
+    <p class="text-sm text-slate-400 mb-8">Last updated: <%= new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) %></p>
+
+    <div class="prose prose-slate max-w-none space-y-6">
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">1. Acceptance of Terms</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">By accessing or using AuditPro ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">2. Description of Service</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">AuditPro provides website SEO auditing, competitor comparison, local business auditing, and keyword ranking tracking tools. The Service is offered on a freemium basis with Free and Pro subscription tiers.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">3. Account Registration</h2>
+        <ul class="list-disc list-inside text-sm text-slate-600 space-y-1">
+          <li>You must provide accurate and complete registration information.</li>
+          <li>You are responsible for maintaining the security of your account credentials.</li>
+          <li>You must be at least 16 years old to create an account.</li>
+          <li>One person or entity may not maintain more than one free account.</li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">4. Free & Pro Plans</h2>
+        <div class="text-sm text-slate-600 space-y-2">
+          <p><strong>Free Plan:</strong> Includes up to 2 website audits per calendar month, access to all audit tools, and data export.</p>
+          <p><strong>Pro Plan (₹999):</strong> Includes unlimited audits, priority support, and all premium features. Payment is processed via Razorpay.</p>
+        </div>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">5. Acceptable Use</h2>
+        <p class="text-sm text-slate-600 leading-relaxed mb-2">You agree not to:</p>
+        <ul class="list-disc list-inside text-sm text-slate-600 space-y-1">
+          <li>Use the Service to scan websites you do not own or have permission to audit.</li>
+          <li>Attempt to overload, disrupt, or exploit the Service infrastructure.</li>
+          <li>Use automated tools to scrape or bulk-access the Service beyond normal use.</li>
+          <li>Resell access to the Service without written permission.</li>
+          <li>Violate any applicable laws or regulations.</li>
+        </ul>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">6. Intellectual Property</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">The Service, including its code, design, and branding, is the property of AuditPro. Your audit data belongs to you. You grant us a limited license to process and store your data solely to provide the Service.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">7. Limitation of Liability</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">AuditPro is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the Service. SEO audit results are recommendations and do not guarantee specific search engine rankings.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">8. Refund Policy</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">Pro plan purchases are non-refundable once the subscription is activated, except as required by applicable law. If you experience technical issues preventing you from using the Service, contact us within 7 days of purchase for assistance.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">9. Account Termination</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">You may delete your account at any time from your account settings. We reserve the right to suspend or terminate accounts that violate these Terms. Upon termination, your data will be permanently deleted.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">10. Changes to Terms</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">We may modify these Terms at any time. Continued use of the Service after changes constitutes acceptance. We will notify registered users of material changes via email.</p>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 class="text-lg font-semibold text-slate-900 mb-3">11. Contact</h2>
+        <p class="text-sm text-slate-600 leading-relaxed">For questions about these Terms, contact us at <a href="mailto:legal@auditpro.com" class="text-indigo-600 hover:underline">legal@auditpro.com</a>.</p>
+      </section>
+    </div>
+  </main>
+  <%- include('partials/footer') %>
+</body>
+</html>

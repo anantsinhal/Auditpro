@@ -62,7 +62,24 @@
     const cwv = psi ? (psi.coreWebVitals || {}) : {};
     const sr = r.sitemapRobots || { sitemap: { found: false, issues: [] }, robots: { found: false, issues: [] } };
     const bl = r.brokenLinks || { totalOnPage: 0, checked: 0, broken: [], redirects: [], healthy: 0 };
-    const aiText = (audit.ai_insights || r.ai_insights || '').trim();
+    const aiRaw = (audit && audit.ai_insights != null) ? audit.ai_insights : (r && r.ai_insights != null ? r.ai_insights : '');
+    const aiString = (typeof aiRaw === 'string') ? aiRaw.trim() : '';
+    let aiReport = null;
+    let aiParseError = null;
+    try {
+      if (aiRaw && typeof aiRaw === 'object') {
+        aiReport = aiRaw;
+      } else if (aiString) {
+        aiReport = JSON.parse(aiString);
+      }
+      if (!aiReport || typeof aiReport !== 'object') {
+        aiReport = null;
+      }
+    } catch (e) {
+      aiParseError = e;
+      aiReport = null;
+    }
+    const aiHasData = !!(aiReport && (aiReport.executiveSummary || aiReport.recommendedTitle || (aiReport.priorityFixes && aiReport.priorityFixes.length) || (aiReport.keywordOpportunities && aiReport.keywordOpportunities.length) || aiReport.actionPlan));
     const crawlBlock = r.crawlBlock || null;
     const isCrawlBlocked = !!(crawlBlock && crawlBlock.blocked);
     const og = (meta.openGraph) || { title: '(none)', description: '(none)', image: '(none)' };
@@ -249,12 +266,122 @@
       </div>
     </div>
 
-    <% if (aiText) { %>
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
-        <h2 class="text-base font-bold text-slate-900 mb-3">AI Suggestions</h2>
-        <pre class="text-sm text-slate-700"><%= aiText %></pre>
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-6">
+      <div class="flex items-center justify-between gap-4 mb-4">
+        <h2 class="text-base font-bold text-slate-900">AI Report</h2>
+        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">Structured</span>
       </div>
-    <% } %>
+
+      <% if (isCrawlBlocked) { %>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+          <p class="text-xs font-semibold text-amber-700 uppercase tracking-wider mb-1">Skipped</p>
+          <p class="text-sm text-amber-900">AI report is disabled because the page content could not be crawled reliably.</p>
+        </div>
+      <% } else if (!aiHasData) { %>
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+          <p class="text-sm text-slate-700 font-medium">AI report not available</p>
+          <p class="text-xs text-slate-500 mt-1">Run the audit again to generate the AI report.<% if (aiString && aiParseError) { %> (Saved AI data was not valid JSON.)<% } %></p>
+        </div>
+      <% } else { %>
+
+        <!-- Executive Summary -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-4">
+          <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Executive Summary</p>
+          <p class="text-sm text-slate-900 leading-relaxed"><%= aiReport.executiveSummary || '—' %></p>
+        </div>
+
+        <!-- Recommended Metadata -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+            <p class="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">Recommended Title</p>
+            <p class="text-sm font-semibold text-indigo-900 wrap-break-word"><%= aiReport.recommendedTitle || '—' %></p>
+            <% if (aiReport.recommendedTitle) { %><p class="text-xs text-indigo-600 mt-1"><%= String(aiReport.recommendedTitle).length %> chars</p><% } %>
+          </div>
+          <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+            <p class="text-xs font-semibold text-green-600 uppercase tracking-wider mb-1">Recommended Meta Description</p>
+            <p class="text-sm text-green-900 wrap-break-word"><%= aiReport.recommendedMetaDescription || '—' %></p>
+            <% if (aiReport.recommendedMetaDescription) { %><p class="text-xs text-green-600 mt-1"><%= String(aiReport.recommendedMetaDescription).length %> chars</p><% } %>
+          </div>
+          <div class="bg-purple-50 border border-purple-200 rounded-xl p-4 lg:col-span-2">
+            <p class="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Recommended H1</p>
+            <p class="text-sm font-semibold text-purple-900 wrap-break-word"><%= aiReport.recommendedH1 || '—' %></p>
+          </div>
+        </div>
+
+        <!-- Priority Fixes -->
+        <div class="mb-4">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="text-sm font-bold text-slate-900">Priority Fixes</h3>
+            <span class="text-xs text-slate-500"><%= (aiReport.priorityFixes || []).length %> items</span>
+          </div>
+          <% if (aiReport.priorityFixes && aiReport.priorityFixes.length > 0) { %>
+            <div class="space-y-3">
+              <% (aiReport.priorityFixes || []).forEach(function(fix) { %>
+                <div class="border border-slate-200 rounded-xl p-4 bg-white">
+                  <div class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                      <p class="text-sm font-semibold text-slate-900 wrap-break-word"><%= (fix && fix.title) ? fix.title : 'Untitled fix' %></p>
+                      <% if (fix && fix.whyItMatters) { %>
+                        <p class="text-xs text-slate-600 mt-1 leading-snug"><%= fix.whyItMatters %></p>
+                      <% } %>
+                    </div>
+                    <% if (fix && fix.severity) { %>
+                      <span class="shrink-0 text-xs font-semibold px-2 py-1 rounded-full <%= impactColor(String(fix.severity).charAt(0).toUpperCase() + String(fix.severity).slice(1).toLowerCase()) %>"><%= fix.severity %></span>
+                    <% } %>
+                  </div>
+                  <% if (fix && fix.howToFix) { %>
+                    <div class="mt-3 bg-slate-50 border border-slate-200 rounded-lg p-3">
+                      <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">How to fix</p>
+                      <p class="text-sm text-slate-800 leading-relaxed"><%= fix.howToFix %></p>
+                    </div>
+                  <% } %>
+                </div>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <p class="text-sm text-slate-600">No priority fixes were generated.</p>
+          <% } %>
+        </div>
+
+        <!-- Keyword Opportunities -->
+        <div class="mb-4">
+          <h3 class="text-sm font-bold text-slate-900 mb-2">Keyword Opportunities</h3>
+          <% if (aiReport.keywordOpportunities && aiReport.keywordOpportunities.length > 0) { %>
+            <div class="flex flex-wrap gap-2">
+              <% (aiReport.keywordOpportunities || []).forEach(function(kw) { %>
+                <span class="px-3 py-1 bg-slate-100 text-slate-700 rounded-full text-sm font-medium"># <%= kw %></span>
+              <% }); %>
+            </div>
+          <% } else { %>
+            <p class="text-sm text-slate-600">No keyword opportunities were generated.</p>
+          <% } %>
+        </div>
+
+        <!-- 30-Day Action Plan -->
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 mb-2">30-Day Action Plan</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <% ['week1','week2','week3','week4'].forEach(function(wk, idx) { %>
+              <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Week <%= idx + 1 %></p>
+                <ul class="space-y-1">
+                  <% ((aiReport.actionPlan && aiReport.actionPlan[wk]) || []).forEach(function(item) { %>
+                    <li class="text-sm text-slate-800 flex items-start gap-2">
+                      <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 shrink-0"></span>
+                      <span class="min-w-0 wrap-break-word"><%= item %></span>
+                    </li>
+                  <% }); %>
+                  <% if (!aiReport.actionPlan || !aiReport.actionPlan[wk] || aiReport.actionPlan[wk].length === 0) { %>
+                    <li class="text-sm text-slate-500">—</li>
+                  <% } %>
+                </ul>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+      <% } %>
+    </div>
 
     <!-- PageSpeed Insights / Core Web Vitals -->
     <% if (psi) { %>

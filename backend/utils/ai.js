@@ -85,6 +85,77 @@ function getClient() {
   return new GoogleGenerativeAI(apiKey);
 }
 
+function createEmptyInsights() {
+  return {
+    executiveSummary: '',
+    recommendedTitle: '',
+    recommendedMetaDescription: '',
+    recommendedH1: '',
+    priorityFixes: [],
+    keywordOpportunities: [],
+    actionPlan: {}
+  };
+}
+
+function extractJsonObject(text) {
+  const raw = typeof text === 'string' ? text.trim() : '';
+  if (!raw) return null;
+
+  // Remove fenced code blocks if present.
+  const noFences = raw
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  // Prefer first JSON object found.
+  const firstBrace = noFences.indexOf('{');
+  const lastBrace = noFences.lastIndexOf('}');
+  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) return null;
+  return noFences.slice(firstBrace, lastBrace + 1);
+}
+
+function coerceInsightsShape(value) {
+  const empty = createEmptyInsights();
+  if (!value || typeof value !== 'object') return empty;
+
+  const priorityFixes = Array.isArray(value.priorityFixes)
+    ? value.priorityFixes
+        .map((x) => {
+          if (!x || typeof x !== 'object') return null;
+          const title = safeText(x.title, 140);
+          const severity = safeText(x.severity, 20);
+          const whyItMatters = safeText(x.whyItMatters, 500);
+          const howToFix = safeText(x.howToFix, 800);
+          return (title || howToFix || whyItMatters)
+            ? { title, severity, whyItMatters, howToFix }
+            : null;
+        })
+        .filter(Boolean)
+    : [];
+
+  const keywordOpportunities = Array.isArray(value.keywordOpportunities)
+    ? value.keywordOpportunities
+        .map((x) => {
+          if (typeof x === 'string') return safeText(x, 80);
+          if (!x || typeof x !== 'object') return '';
+          return safeText(x.keyword || x.term, 80);
+        })
+        .filter(Boolean)
+    : [];
+
+  const actionPlan = (value.actionPlan && typeof value.actionPlan === 'object') ? value.actionPlan : {};
+
+  return {
+    executiveSummary: safeText(value.executiveSummary, 2000),
+    recommendedTitle: safeText(value.recommendedTitle, 120),
+    recommendedMetaDescription: safeText(value.recommendedMetaDescription, 240),
+    recommendedH1: safeText(value.recommendedH1, 140),
+    priorityFixes,
+    keywordOpportunities,
+    actionPlan
+  };
+}
+
 async function generateInsights(auditData) {
   const client = getClient();
   if (!client) {
@@ -93,54 +164,59 @@ async function generateInsights(auditData) {
 
   const model = client.getGenerativeModel({ model: getModelName() });
 
-  const prompt = `
-You are an expert SEO consultant.
+  const prompt = `You are an expert SEO consultant.
 
-Your task is to convert the given structured SEO audit data into a clean, professional, and actionable report.
+Convert the provided structured SEO audit data into an actionable report.
 
-IMPORTANT RULES:
-- Only use the provided data
-- Do NOT include navigation text, HTML junk, or unrelated content
-- Keep everything clean, readable, and well-formatted
-- Be concise and practical
-- Do NOT explain anything
-- Do NOT add extra commentary
+Return ONLY valid JSON matching EXACTLY this shape:
+{
+  "executiveSummary": "",
+  "recommendedTitle": "",
+  "recommendedMetaDescription": "",
+  "recommendedH1": "",
+  "priorityFixes": [
+    { "severity": "High|Medium|Low", "title": "", "whyItMatters": "", "howToFix": "" }
+  ],
+  "keywordOpportunities": [""],
+  "actionPlan": {
+    "week1": [],
+    "week2": [],
+    "week3": [],
+    "week4": []
+  }
+}
 
-OUTPUT FORMAT (STRICT):
-
-TITLE:
-<Write an improved SEO title under 60 characters>
-
-META DESCRIPTION:
-<Write a clear meta description under 155 characters>
-
-H1:
-<Write an improved H1 heading>
-
-TOP FIXES:
-- <Fix 1 (clear and actionable)>
-- <Fix 2>
-- <Fix 3>
-- <Fix 4>
-- <Fix 5>
-
-KEYWORDS:
-- <keyword 1>
-- <keyword 2>
-- <keyword 3>
-- <keyword 4>
-- <keyword 5>
+Rules:
+- Use ONLY the provided data
+- No markdown, no code fences, no commentary
+- Keep strings concise and practical
+- Provide up to 5 priorityFixes and up to 12 keywordOpportunities
 
 DATA:
-${JSON.stringify(auditData)}
-`;
+${JSON.stringify(auditData)}`;
 
   const response = await retryWithBackoff(
     () => model.generateContent(prompt),
     'generateInsights'
   );
   const result = await response.response;
-  return result.text();
+
+  const rawText = (result.text() || '').trim();
+  const jsonText = extractJsonObject(rawText);
+  if (!jsonText) {
+    const fallback = createEmptyInsights();
+    fallback.executiveSummary = safeText(rawText, 2000);
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(jsonText);
+    return coerceInsightsShape(parsed);
+  } catch (e) {
+    const fallback = createEmptyInsights();
+    fallback.executiveSummary = safeText(rawText, 2000);
+    return fallback;
+  }
 }
 
 async function generateAssistantReply({ message, history, page, image, context }) {

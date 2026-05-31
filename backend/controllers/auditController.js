@@ -77,17 +77,18 @@ exports.run = async (req, res, next) => {
     // Generate AI insights after audit creation (non-fatal if misconfigured)
     try {
       const aiInsights = await generateInsights(audit.results || {});
+      const aiInsightsJson = JSON.stringify(aiInsights);
 
       try {
         // Preferred: store in a dedicated DB column
-        await Audit.update(audit.id, { ai_insights: aiInsights }, { accessToken: req.accessToken });
+        await Audit.update(audit.id, { ai_insights: aiInsightsJson }, { accessToken: req.accessToken });
       } catch (updateErr) {
         const updateMsg = updateErr?.message || String(updateErr);
         // Fallback: if the column doesn't exist, store inside the results JSON.
         if (/ai_insights/i.test(updateMsg) && (/column/i.test(updateMsg) || /does not exist/i.test(updateMsg))) {
           await Audit.update(
             audit.id,
-            { results: { ...(audit.results || {}), ai_insights: aiInsights } },
+            { results: { ...(audit.results || {}), ai_insights: aiInsightsJson } },
             { accessToken: req.accessToken }
           );
         } else {

@@ -36,14 +36,19 @@ async function startServer() {
       // Start cron job for scheduled audits (runs every hour)
       try {
         const { runDueAudits } = require('./controllers/scheduledAuditController');
-        const CRON_INTERVAL = 60 * 60 * 1000; // 1 hour
+        const defaultCronIntervalMs = 60 * 60 * 1000; // 1 hour
+        const configuredCronIntervalMs = Number(process.env.SCHEDULED_AUDIT_CRON_INTERVAL_MS || defaultCronIntervalMs);
+        const CRON_INTERVAL = (Number.isFinite(configuredCronIntervalMs) && configuredCronIntervalMs >= 1000)
+          ? configuredCronIntervalMs
+          : defaultCronIntervalMs;
+
         setInterval(() => {
           console.log('[Cron] Checking for due scheduled audits...');
           runDueAudits().catch(err => {
             console.error('[Cron] Unhandled cron error:', err.message || err);
           });
         }, CRON_INTERVAL);
-        console.log('✓ Scheduled audit cron started (hourly)');
+        console.log(`✓ Scheduled audit cron started (every ${Math.round(CRON_INTERVAL / 1000)}s)`);
       } catch (cronErr) {
         console.error('Cron setup failed:', cronErr.message);
       }

@@ -20,6 +20,7 @@
   var storageKey = 'auditpro_assistant_history_' + userId;
   var tipKey = 'auditpro_assistant_tip_dismissed_' + userId;
   var freeMsgLimit = 20; // UI gating; server should still enforce if needed.
+  var MAX_MESSAGE_CHARS = 2000;
 
   var pendingImage = null; // { mimeType, data, name }
   var sessionMessages = [];
@@ -170,12 +171,31 @@
     history.forEach(renderMessage);
   }
 
+  function clampText(value, maxLen) {
+    var text = String(value || '').trim();
+    if (!maxLen || text.length <= maxLen) return text;
+    return text.slice(0, maxLen);
+  }
+
+  function sanitizeHistory(history, maxItems) {
+    if (!Array.isArray(history)) return [];
+    var normalized = history
+      .map(function (m) {
+        var role = (m && m.role === 'assistant') ? 'assistant' : 'user';
+        var content = clampText(m && m.content, MAX_MESSAGE_CHARS);
+        if (!content) return null;
+        return { role: role, content: content };
+      })
+      .filter(Boolean);
+    return trimHistory(normalized, maxItems);
+  }
+
   function loadHistory() {
     try {
       var raw = localStorage.getItem(storageKey);
       if (!raw) return [];
       var parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
+      return sanitizeHistory(Array.isArray(parsed) ? parsed : [], 50);
     } catch (e) {
       return [];
     }
@@ -196,7 +216,11 @@
   }
 
   function addToHistory(history, msg) {
-    history.push({ role: msg.role, content: msg.content });
+    if (!Array.isArray(history)) history = [];
+    var role = (msg && msg.role === 'assistant') ? 'assistant' : 'user';
+    var content = clampText(msg && msg.content, MAX_MESSAGE_CHARS);
+    if (!content) return trimHistory(history, 50);
+    history.push({ role: role, content: content });
     return trimHistory(history, 50);
   }
 
@@ -255,7 +279,7 @@
       return;
     }
 
-    var content = String(text || '').trim();
+    var content = clampText(text, MAX_MESSAGE_CHARS);
     if (!content && !pendingImage) return;
 
     setError('');
@@ -309,7 +333,7 @@
           message: content,
           context: contextLines.join('\n'),
           page: window.location.pathname,
-          history: trimHistory(memoryHistory, 20),
+          history: sanitizeHistory(memoryHistory, 20),
           image: pendingImage ? { mimeType: pendingImage.mimeType, data: pendingImage.data, name: pendingImage.name } : undefined
         })
       });

@@ -75,14 +75,19 @@ exports.remove = async (req, res, next) => {
 // Called by cron job - runs all due scheduled audits
 exports.runDueAudits = async () => {
   try {
+    console.log('[Cron] Started');
+    console.log('[Cron] Current time:', new Date());
+
     const { runAudit } = require('../utils/auditEngine');
     const Audit = require('../models/Audit');
     const User = require('../models/User');
-    const due = await ScheduledAudit.findDue();
+    const dueAudits = await ScheduledAudit.findDue();
 
-    console.log(`[Cron] Found ${due.length} scheduled audit(s) due`);
+    console.log('[Cron] Due audits:', dueAudits.length);
 
-    for (const schedule of due) {
+    console.log(`[Cron] Found ${dueAudits.length} scheduled audit(s) due`);
+
+    for (const schedule of dueAudits) {
       try {
         const user = await User.findById(schedule.user_id);
         if (!user) continue;

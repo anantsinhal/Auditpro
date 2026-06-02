@@ -8,7 +8,7 @@ function parseLimitEnv(value, fallback) {
 
 const DEFAULT_LIMITS = Object.freeze({
   free: Object.freeze({
-    monthlyAudits: 20,
+    monthlyAudits: 5,
     scheduledAudits: 5,
     bulkKeywordChecks: 50
   }),

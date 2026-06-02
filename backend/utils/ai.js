@@ -239,6 +239,21 @@ async function generateAssistantReply({ message, history, page, image, context }
     }))
     .filter((m) => m.content);
 
+  const wantsAppPageInfo = (() => {
+    const text = String(normalizedMessageRaw || '').toLowerCase();
+    return /\b(current page|which page|what page|where am i|url|path|route)\b/.test(text);
+  })();
+
+  const cleanedContext = (() => {
+    if (!normalizedContext) return '';
+    const lines = String(normalizedContext)
+      .split('\n')
+      .map((l) => String(l || '').trim())
+      .filter(Boolean)
+      .filter((l) => !/^(app page:|current app page\/path:)/i.test(l));
+    return safeText(lines.join('\n'), 4000);
+  })();
+
   const systemInstruction = `You are AuditPro AI Assistant.
 
 Your main purpose is to help users:
@@ -260,11 +275,14 @@ Rules:
 - Be specific to the provided Website Info when available.
 - If the Website Info is missing or unclear, ask 1–2 short questions to get the URL or the key page.
 - Do not claim you visited the site or accessed private data unless it is explicitly included in the Website Info.
+- Do not mention the app page/path unless the user explicitly asks for it.
 `;
 
   const websiteInfoBlockParts = [];
-  if (normalizedContext) websiteInfoBlockParts.push(normalizedContext);
-  if (normalizedPage) websiteInfoBlockParts.push(`Current app page/path: ${normalizedPage}`);
+  if (cleanedContext) websiteInfoBlockParts.push(cleanedContext);
+  if (wantsAppPageInfo && normalizedPage) {
+    websiteInfoBlockParts.push(`Current app page/path: ${normalizedPage}`);
+  }
   const websiteInfoBlock = websiteInfoBlockParts.length ? websiteInfoBlockParts.join('\n') : '(none provided)';
 
   const historyBlock = normalizedHistory.length

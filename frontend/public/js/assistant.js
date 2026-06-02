@@ -268,6 +268,13 @@
     node.parentNode.removeChild(node);
   }
 
+  function userAskedForAppPageInfo(message) {
+    var text = String(message || '').toLowerCase();
+    // Only include app path when the user explicitly asks for it.
+    // Avoid triggering on generic phrases like "page speed".
+    return /\b(current page|which page|what page|where am i|url|path|route)\b/.test(text);
+  }
+
   async function sendMessage(text) {
     if (String(mode).toLowerCase() === 'guest') {
       setError('Please log in to chat.');
@@ -308,7 +315,10 @@
 
     try {
       var contextLines = [];
-      contextLines.push('App page: ' + window.location.pathname);
+      var includeAppPage = userAskedForAppPageInfo(content);
+      if (includeAppPage && window.location.pathname) {
+        contextLines.push('App page: ' + window.location.pathname);
+      }
 
       // If we're on an audit result page, try to grab the audited site URL from the page header.
       if (window.location.pathname && window.location.pathname.indexOf('/audit/') === 0) {
@@ -331,8 +341,8 @@
         credentials: 'same-origin',
         body: JSON.stringify({
           message: content,
-          context: contextLines.join('\n'),
-          page: window.location.pathname,
+          context: contextLines.length ? contextLines.join('\n') : undefined,
+          page: includeAppPage ? window.location.pathname : undefined,
           history: sanitizeHistory(memoryHistory, 20),
           image: pendingImage ? { mimeType: pendingImage.mimeType, data: pendingImage.data, name: pendingImage.name } : undefined
         })
